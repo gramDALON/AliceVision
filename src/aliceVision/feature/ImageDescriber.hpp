@@ -298,7 +298,6 @@ class UnknownImageDescriber  : public ImageDescriber
      */
     std::size_t getMemoryConsumption(std::size_t width, std::size_t height) const override
     {
-        std::cout<<"Bonjour 0"<<std::endl;
         return 0;
     }
 
@@ -307,34 +306,28 @@ class UnknownImageDescriber  : public ImageDescriber
      * @param[in] upRight
      */
     void setUpRight(bool upRight) override
-    {std::cout<<"Bonjour 1"<<std::endl;}
+    {}
 
     /**
      * @brief Set if yes or no imageDescriber need to use cuda implementation
      * @param[in] useCuda
      */
     void setUseCuda(bool useCuda) override 
-    {
-        std::cout<<"Bonjour 2"<<std::endl;
-    }
+    {}
 
     /**
      * @brief set the CUDA pipe
      * @param[in] pipe The CUDA pipe id
      */
     void setCudaPipe(int pipe) override
-    {
-        std::cout<<"Bonjour 3"<<std::endl;
-    }
+    {}
 
     /**
      * @brief Use a preset to control the number of detected regions
      * @param[in] preset The preset configuration
      */
     void setConfigurationPreset(ConfigurationPreset preset) override
-    {
-        std::cout<<"Bonjour 4"<<std::endl;
-    }
+    {}
 
     /**
      * @brief Detect regions on the 8-bit image and compute their attributes (description)
@@ -348,7 +341,6 @@ class UnknownImageDescriber  : public ImageDescriber
                   std::unique_ptr<Regions>& regions,
                   const image::Image<unsigned char>* mask = nullptr) override
     {
-        std::cout<<"Bonjour 5"<<std::endl;
         return false;
     }
 
@@ -362,7 +354,6 @@ class UnknownImageDescriber  : public ImageDescriber
      */
     bool describe(const image::Image<float>& image, std::unique_ptr<Regions>& regions, const image::Image<unsigned char>* mask = nullptr) override
     {
-        std::cout<<"Bonjour 6"<<std::endl;
         return false;
     }
 
@@ -372,7 +363,6 @@ class UnknownImageDescriber  : public ImageDescriber
      */
     void allocate(std::unique_ptr<Regions>& regions) const override 
     {
-        std::cout<<"Bonjour 7"<<std::endl;
         regions.reset(new UNKNOWN_Regions);
     }
 
