@@ -228,7 +228,7 @@ std::unique_ptr<ImageDescriber> createImageDescriber(EImageDescriberType imageDe
         case EImageDescriberType::AKAZE_LIOP:
             describerPtr.reset(new ImageDescriber_AKAZE(AKAZEParams(AKAZEOptions(), feature::AKAZE_LIOP)));
             break;
-        //Unknown descriptor to be used when the descriptor computed outside of alicevsion
+        //Unknown descriptor to be used when the descriptor is computed outside of alicevsion
         case EImageDescriberType::UNKNOWN:
             describerPtr.reset(new UnknownImageDescriber());
             break;
