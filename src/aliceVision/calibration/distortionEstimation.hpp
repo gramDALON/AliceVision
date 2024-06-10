@@ -27,6 +27,8 @@ namespace calibration {
  */
 struct LineWithPoints
 {
+    bool forceHorizontal;
+    bool forceVertical;
     double angle;
     double dist;
     std::vector<Vec2> points;

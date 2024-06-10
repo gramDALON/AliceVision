@@ -15,6 +15,50 @@
 namespace aliceVision {
 namespace calibration {
 
+class CostLineAngle : public ceres::CostFunction
+{
+  public:
+    CostLineAngle(double target)
+      : _target(target)
+    {
+        set_num_residuals(1);
+        mutable_parameter_block_sizes()->push_back(1);
+    }
+
+    bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const override
+    {
+        const double* parameter_angle_line = parameters[0];
+
+        const double angle = parameter_angle_line[0];
+
+        const double cangle = std::cos(angle);
+        const double sangle = std::sin(angle);
+
+        const double ctarget = std::cos(_target);
+        const double starget = std::sin(_target);
+
+        double dot = 1.0 - (cangle * ctarget + sangle * starget);
+        double w = 1000.0;
+        residuals[0] = w * dot;
+
+        if (jacobians == nullptr)
+        {
+            return true;
+        }
+
+        if (jacobians[0] != nullptr)
+        {
+            Eigen::Map<Eigen::Matrix<double, 1, 1, Eigen::RowMajor>> J(jacobians[0]);
+            J(0, 0) = - w * (ctarget * -sangle + starget * cangle);
+        }
+
+        return true;
+    }
+
+  private:
+    double _target;
+};
+
 class CostLine : public ceres::CostFunction
 {
   public:
@@ -267,11 +311,24 @@ bool estimate(std::shared_ptr<camera::Undistortion> undistortionToEstimate,
         problem.AddParameterBlock(&l.angle, 1);
         problem.AddParameterBlock(&l.dist, 1);
 
+        if (l.forceHorizontal)
+        {
+            ceres::CostFunction* costFunction = new CostLineAngle(M_PI_2);
+            problem.AddResidualBlock(costFunction, lossFunction, &l.angle);
+        }
+        if (l.forceVertical)
+        {
+            l.angle = 0.0;
+            problem.SetParameterBlockConstant(&l.angle);
+        }
+
         for (Vec2 pt : l.points)
         {
             ceres::CostFunction* costFunction = new CostLine(undistortionToEstimate, pt);
             problem.AddResidualBlock(costFunction, lossFunction, &l.angle, &l.dist, center, ptrUndistortionParameters);
         }
+
+        
     }
 
     ceres::Solver::Options options;

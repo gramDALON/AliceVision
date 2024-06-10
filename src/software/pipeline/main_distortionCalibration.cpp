@@ -57,7 +57,9 @@ bool retrieveLines(std::vector<calibration::LineWithPoints>& lineWithPoints, con
                            bool replaceRowWithSum,
                            bool replaceColWithSum,
                            bool flipRow,
-                           bool flipCol) -> void {
+                           bool flipCol,
+                           bool forceHorizontal,
+                           bool forceVertical) -> void {
         int dim1 = exploreByRow ? board.rows() : board.cols();
         int dim2 = exploreByRow ? board.cols() : board.rows();
 
@@ -67,6 +69,8 @@ bool retrieveLines(std::vector<calibration::LineWithPoints>& lineWithPoints, con
             calibration::LineWithPoints line;
             line.angle = boost::math::constants::pi<double>() * .25;
             line.dist = 1;
+            line.forceHorizontal = forceHorizontal;
+            line.forceVertical = forceVertical;
 
             for (int j = 0; j < dim2; ++j)
             {
@@ -95,25 +99,27 @@ bool retrieveLines(std::vector<calibration::LineWithPoints>& lineWithPoints, con
         }
     };
 
+    bool forceAngle = true;
+
     for (auto& b : boards)
     {
         // Horizontal lines
-        createLines(b, true, false, false, false, false);
+        createLines(b, true, false, false, false, false, forceAngle, false);
 
         // 1st diagonal - 1st half
-        createLines(b, true, true, false, false, false);
+        createLines(b, true, true, false, false, false, false, false);
 
         // 2nd diagonal - 1st half
-        createLines(b, true, true, false, true, false);
+        createLines(b, true, true, false, true, false, false, false);
 
         // Vertical lines
-        createLines(b, false, false, false, false, false);
+        createLines(b, false, false, false, false, false, false, forceAngle);
 
         // 1st diagonal - 2nd half
-        createLines(b, false, false, true, false, false);
+        createLines(b, false, false, true, false, false, false, false);
 
         // 2nd diagonal - 2nd half
-        createLines(b, false, false, true, true, false);
+        createLines(b, false, false, true, true, false, false, false);
     }
 
     // Check that enough lines have been generated
@@ -210,6 +216,24 @@ int aliceVision_main(int argc, char* argv[])
     // Calibrate each intrinsic independently
     for (auto& [intrinsicId, intrinsicPtr] : sfmData.getIntrinsics())
     {
+        //Make sure we have only one aspect ratio per intrinsics
+        std::set<double> pa;
+        for (auto& [viewId, viewPtr] : sfmData.getViews())
+        {
+            if (viewPtr->getIntrinsicId() == intrinsicId)
+            {
+                pa.insert(viewPtr->getImage().getDoubleMetadata({"PixelAspectRatio"}));
+            }
+        }
+        
+        if (pa.size() != 1)
+        {
+            ALICEVISION_LOG_ERROR("An intrinsic has multiple views with different Pixel Aspect Ratios");
+            return EXIT_FAILURE;
+        }
+
+        double pixelAspectRatio = *pa.begin();
+
         // Convert to pinhole
         std::shared_ptr<camera::Pinhole> cameraIn = std::dynamic_pointer_cast<camera::Pinhole>(intrinsicPtr);
 
@@ -251,6 +275,8 @@ int aliceVision_main(int argc, char* argv[])
             return EXIT_FAILURE;
         }
 
+        undistortion->setPixelAspectRatio(pixelAspectRatio);
+
         // Transform checkerboards to line With points
         std::vector<calibration::LineWithPoints> allLinesWithPoints;
         for (auto& pv : sfmData.getViews())
@@ -275,10 +301,15 @@ int aliceVision_main(int argc, char* argv[])
 
         if (undistortionModel == camera::EUNDISTORTION::UNDISTORTION_3DEANAMORPHIC4)
         {
-            initialParams = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0};
-            lockSteps = {{true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-                         {false, false, false, false, true, true, true, true, true, true, true, true, true, true},
-                         {false, false, false, false, false, false, false, false, false, false, true, true, true, true}};
+            initialParams = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+            lockSteps = {
+                            //First, lock everything but lines and lens alignement
+                            {true, true, true, true, true, true, true, true, true, true, false, true, true},
+                            //unlock first monomials
+                            {false, false, false, false, true, true, true, true, true, true, false, true, true},
+                            //Unlock final monomials
+                            {false, false, false, false, false, false, false, false, false, false, false, true, true}
+                         };
         }
         else
         {
