@@ -7395,6 +7395,7 @@ Xolo;Xolo Play 8X-1200;4.82;devicespecifications
 Xolo;Xolo Q700s Plus;4.54;devicespecifications
 Xolo;Xolo Q900;4.8;devicespecifications
 Xtouch;Xtouch Unix;4.69;devicespecifications
+
 Yakumo;Yakumo CamMaster SD 432;5.33;digicamdb
 Yakumo;Yakumo CamMaster SD 482;5.75;digicamdb
 Yakumo;Yakumo Mega Image 34;5.33;digicamdb
@@ -7497,3 +7498,4 @@ Zuk;Zuk Z2;4.61;devicespecifications
 Zuk;Zuk Z2 Pro;4.61;devicespecifications
 Zuk;Zuk Z2 Rio Edition;4.54;devicespecifications
 StereoLabs;Zed2i;5.38;usercontribution
+Samsung;Samsung HP2;9.792;usercontribution
